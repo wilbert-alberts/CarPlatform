@@ -1,0 +1,126 @@
+
+// Command handles incoming commands from the serial and provides results.
+// 
+// Available commands:
+//
+// OBS_off
+// OBS_sweep
+// OBS_stare <dir> 
+// OBS_getRecent
+//     Out: direction
+//     Out: distance
+// OBS_getFull
+//     Out: distance (at -sweep)
+//     Out: distance (at -sweep+1)
+//     ...
+//     Out: distance (at 0)
+//     ...
+//     Out: distance (at sweep-1)
+//     Out: distance (at sweep)
+//
+// SUP_getSupply
+//     Out: supply voltage
+// 
+
+#define CMD_BUFFERSIZE (40)
+
+static char     cmd_buffer[CMD_BUFFERSIZE];
+static uint8_t  cmd_cursor = 0;
+
+static void   cmd_processCmd();
+static int8_t cmd_getInt8(int8_t* dest);
+
+
+void CMD_setup()
+{
+  for (cmd_cursor=0; cmd_cursor<CMD_BUFFERSIZE; cmd_cursor++)
+    cmd_buffer[cmd_cursor]=0; 
+  cmd_cursor = 0;
+}
+
+
+void CMD_loop()
+{
+  static char ch;
+  while (Serial.available()>0) {
+    ch = Serial.read();
+    if ((ch==' ') || (ch=='\n') || (ch=='\r')) {
+      cmd_buffer[cmd_cursor] = 0;
+      if (cmd_cursor>0)
+        cmd_processCmd();
+      cmd_cursor = 0;  
+    }
+    else {
+      cmd_buffer[cmd_cursor] = ch;
+      cmd_cursor++;
+      if (cmd_cursor==CMD_BUFFERSIZE) {
+        cmd_cursor = 0;
+      }
+    }
+  }
+}
+
+
+static int8_t cmd_getInt8(int8_t* dest)
+{
+  long l = Serial.parseInt();
+  *dest  = (int8_t) l;
+  return 0;
+}
+
+static void cmd_processCmd()
+{
+  /*
+  Serial.println("cmd_processCmd()");
+  Serial.print(">");
+  Serial.print(cmd_buffer);
+  Serial.println("<");
+  */
+  if (strcmp(cmd_buffer, "OBS_off") ==0 ) {
+    OBS_off();
+    Serial.println("OK");
+    return;
+  }
+  
+  if (strcmp(cmd_buffer, "OBS_sweep") ==0 ) {
+    OBS_sweep();
+    Serial.println("OK");
+    return;
+  }
+
+  if (strcmp(cmd_buffer, "OBS_stare") ==0 ) {
+    int8_t arg;
+    if (cmd_getInt8(&arg) == 0) {
+      OBS_stare(arg);
+      Serial.println("OK");
+    }
+    return;
+  }
+
+  if (strcmp(cmd_buffer, "OBS_getRecent") ==0 ) {
+    int8_t dir;
+    uint8_t dist;    
+    OBS_getRecent();
+    Serial.println("OK");
+    return;
+  }
+
+  if (strcmp(cmd_buffer, "OBS_getSweep") ==0 ) {
+    int8_t dir;
+    uint8_t dist;    
+    OBS_getSweep();
+    Serial.println("OK");
+    return;
+  }
+
+  if (strcmp(cmd_buffer, "SUP_getSupply") ==0 ) {
+    Serial.println(SUP_toVoltage());
+    Serial.println("OK");
+    return;
+  }
+
+  Serial.println("Error: Illegal command");  
+}
+
+
+
