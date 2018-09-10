@@ -13,6 +13,7 @@
 #define OBS_TRIGGERPIN (3)
 #define OBS_ECHOPIN    (4)
 
+#define OBS_SERVO      (9)
 
 #define OBS_MODE_OFF     (0)
 #define OBS_MODE_STARE   (1)
@@ -57,7 +58,7 @@ void OBS_setup()
   pinMode(OBS_ECHOPIN, INPUT);
   digitalWrite(OBS_TRIGGERPIN, LOW);
 
-  obs_servo.attach(9);
+  obs_servo.attach(OBS_SERVO);
 
   OBS_stare(0);
   Serial.println("started.");

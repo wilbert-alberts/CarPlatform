@@ -21,6 +21,13 @@
 // SUP_getSupply
 //     Out: supply voltage
 // 
+// MOT_lr <left> <right>
+// MOT_sd <speed> <direction>
+// MOT_off
+// 
+// LIN_get
+//    OUT: line sensor output in low nibble
+
 
 #define CMD_BUFFERSIZE (40)
 
@@ -65,6 +72,13 @@ static int8_t cmd_getInt8(int8_t* dest)
 {
   long l = Serial.parseInt();
   *dest  = (int8_t) l;
+  return 0;
+}
+
+static int8_t cmd_getInt(int* dest)
+{
+  long l = Serial.parseInt();
+  *dest  = (int) l;
   return 0;
 }
 
@@ -115,6 +129,50 @@ static void cmd_processCmd()
 
   if (strcmp(cmd_buffer, "SUP_getSupply") ==0 ) {
     Serial.println(SUP_toVoltage());
+    Serial.println("OK");
+    return;
+  }
+
+  if (strcmp(cmd_buffer, "WHL_off") == 0) {
+    WHL_off();
+    Serial.println("OK");
+    return;
+  }
+
+  if (strcmp(cmd_buffer, "WHL_LR") == 0) {
+    WHL_off();
+    int left;
+    int right;
+    if (cmd_getInt(&left) == 0) {
+      if (cmd_getInt(&right) == 0) {
+        WHL_setLeftRight(left, right);
+        Serial.println("OK");
+        return;
+      }
+    }
+          
+    Serial.println("ERROR");
+    return;
+  }
+
+  if (strcmp(cmd_buffer, "WHL_SD") == 0) {
+    WHL_off();
+    int velo;
+    int dir;
+    if (cmd_getInt(&velo) == 0) {
+      if (cmd_getInt(&dir) == 0) {
+        WHL_setSpeedDirection(velo, dir);
+        Serial.println("OK");
+        return;
+      }
+    }
+          
+    Serial.println("ERROR");
+    return;
+  }
+
+  if (strcmp(cmd_buffer, "LIN_get") == 0) {
+    LIN_getLineSensor();    
     Serial.println("OK");
     return;
   }
