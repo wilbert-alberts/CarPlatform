@@ -4,12 +4,14 @@
 // Available commands:
 //
 // OBS_off
-// OBS_sweep
+// OBS_sweep <min> <max>
 // OBS_stare <dir> 
 // OBS_getRecent
 //     Out: direction
 //     Out: distance
 // OBS_getFull
+//     Out: <sweep_min>
+//     Out: <sweep_max>
 //     Out: distance (at -sweep)
 //     Out: distance (at -sweep+1)
 //     ...
@@ -24,6 +26,9 @@
 // MOT_lr <left> <right>
 // MOT_sd <speed> <direction>
 // MOT_off
+// MOT_get
+//    Out: <left>
+//    Out: <right>
 // 
 // LIN_get
 //    OUT: line sensor output in low nibble
@@ -97,8 +102,14 @@ static void cmd_processCmd()
   }
   
   if (strcmp(cmd_buffer, "OBS_sweep") ==0 ) {
-    OBS_sweep();
-    Serial.println("OK");
+    int8_t sweepMin;
+    int8_t sweepMax;
+    
+    if (cmd_getInt8(&sweepMin) ==0) {
+      if (cmd_getInt8(&sweepMax) == 0) {
+            OBS_sweep(sweepMin, sweepMax);        
+      }
+    }
     return;
   }
 
@@ -168,6 +179,12 @@ static void cmd_processCmd()
     }
           
     Serial.println("ERROR");
+    return;
+  }
+
+  if (strcmp(cmd_buffer, "WHL_get") == 0) {
+    WHL_getLeftRight();
+    Serial.println("OK");
     return;
   }
 

@@ -11,6 +11,8 @@
 
 static unsigned long whl_lastCmd=0;
 static boolean whl_moving=false;
+static int whl_left = 0;
+static int whl_right = 0;
 
 void WHL_setup()
 {
@@ -33,6 +35,8 @@ void WHL_setLeftRight(int left, int right)
   // positive means: move forward
   // negative means: move backward
 
+  whl_left = left;
+  whl_right = right;
 
   if (left<=0) {
     analogWrite(WHL_LEFT_BACKWARD, -left);
@@ -94,5 +98,11 @@ void WHL_setSpeedDirection(int speed, int direction)
   }
 
   WHL_setLeftRight(left, right);
+}
+
+void WHL_getLeftRight()
+{
+  Serial.println(whl_left);
+  Serial.println(whl_right);
 }
 
