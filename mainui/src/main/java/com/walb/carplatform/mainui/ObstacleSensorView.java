@@ -53,13 +53,13 @@ public class ObstacleSensorView extends Composite implements Observer {
 
 	@Override
 	public void update(Observable arg0, Object arg1) {
-		IObstacleSensorObservation obs = model.getObservation();
+		IObstacleSensorModel.Observation obs = model.getObservation();
 		this.getDisplay().asyncExec(new UpdateTask(obs)); 		
 	}
 
 	class UpdateTask implements Runnable {
-		private IObstacleSensorObservation observation;
-		public UpdateTask(IObstacleSensorObservation obs) {
+		private IObstacleSensorModel.Observation observation;
+		public UpdateTask(IObstacleSensorModel.Observation obs) {
 			observation = obs;
 		}
 		@Override

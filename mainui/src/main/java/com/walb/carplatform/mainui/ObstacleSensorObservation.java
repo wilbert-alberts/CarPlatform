@@ -1,6 +1,6 @@
 package com.walb.carplatform.mainui;
 
-public class ObstacleSensorObservation implements IObstacleSensorObservation {
+public class ObstacleSensorObservation implements IObstacleSensorModel.Observation {
 	private int startAngle;
 	private double obstacleDistance[];
 	private boolean rangeChanged;
