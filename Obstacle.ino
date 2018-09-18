@@ -1,3 +1,5 @@
+#include <Servo.h>
+
 // Obstacle sensor
 // Obstacle sensor can be in three states:
 // OFF: does not do anything at all
@@ -11,6 +13,7 @@
 #define OBS_TRIGGERPIN (3)
 #define OBS_ECHOPIN    (4)
 
+#define OBS_SERVO      (9)
 
 #define OBS_MODE_OFF     (0)
 #define OBS_MODE_STARE   (1)
@@ -19,14 +22,20 @@
 #define OBS_SWEEP_LEFT    (-1)
 #define OBS_SWEEP_RIGHT   ( 1)
 
+#define OBS_SWEEP_MIN     (-45)
+#define OBS_SWEEP_MAX     ( 45)
+
 // Array to hold result as specified in angles from -90 to 90 (including)
 // This implies that size of array needs to be 181!
 typedef uint8_t OBS_View[181];
 
-static uint8_t  obs_mode      = OBS_MODE_STARE;       // One of OBS_MODE_*
-static OBS_View obs_view;       // Array holding results
-static int8_t   obs_direction = 0;  // Actual direction of sensor
-static uint8_t  obs_sweepTo   = OBS_SWEEP_LEFT ;    // One of OBS_SWEEP_*
+static uint8_t  obs_mode        = OBS_MODE_STARE;  // One of OBS_MODE_*
+static OBS_View obs_view;                          // Array holding results
+static int8_t   obs_direction   = 0;               // Actual direction of sensor
+static uint8_t  obs_sweepTo     = OBS_SWEEP_LEFT;  // One of OBS_SWEEP_*
+static int8_t   obs_servoOffset = -10;             // Servo offset w.r.t. straight ahead (0 degrees)
+
+static Servo obs_servo;
 
 static void obs_loopStare();
 static void obs_loopSweep();
@@ -49,6 +58,9 @@ void OBS_setup()
   pinMode(OBS_ECHOPIN, INPUT);
   digitalWrite(OBS_TRIGGERPIN, LOW);
 
+  obs_servo.attach(OBS_SERVO);
+
+  OBS_stare(0);
   Serial.println("started.");
 }
 
@@ -84,16 +96,37 @@ void OBS_sweep()
   obs_mode = OBS_MODE_SWEEP;
 }
 
+void OBS_getRecent()
+{
+  Serial.print(obs_direction);
+  Serial.print('\t');
+  Serial.println(obs_view[90+obs_direction]);
+}
+
+void OBS_getSweep()
+{
+  for (int8_t d=OBS_SWEEP_MIN; d<= OBS_SWEEP_MAX; d++) {
+    Serial.print(d);
+    Serial.print('\t');
+    Serial.println(obs_view[90+d]);
+  }
+}
+
 static void obs_setDirection(int8_t direction)
 {
-  obs_direction = direction;
+  obs_direction = direction;  
+  if (obs_direction<-90)
+    obs_direction = -90;
+  if (obs_direction>90)
+    obs_direction = 90;
+  obs_servo.write(90+direction+obs_servoOffset);
 }
 
 static void obs_loopStare()
 {
   obs_readSensor();
-  Serial.print("Obstacle at: ");
-  Serial.println(obs_view[90+obs_direction]);
+  //Serial.print("Obstacle at: ");
+  //Serial.println(obs_view[90+obs_direction]);
 }
 
 static void obs_loopSweep()
@@ -101,20 +134,24 @@ static void obs_loopSweep()
   // Direct sensor into next direction
   int8_t d = obs_direction;
   d = d + obs_sweepTo;
-  if (d<-90) {
-    d = -89;
-    obs_direction = OBS_SWEEP_RIGHT;
+  if (d<OBS_SWEEP_MIN) {
+    d = OBS_SWEEP_MIN+1;
+    obs_sweepTo = OBS_SWEEP_RIGHT;
   }
   else {
-    if (d>90) {
-      d=89;
-      obs_direction = OBS_SWEEP_LEFT;
+    if (d>OBS_SWEEP_MAX) {
+      d=OBS_SWEEP_MAX-1;
+      obs_sweepTo = OBS_SWEEP_LEFT;
     }    
   }
   obs_setDirection(d);
 
   // Read sensor and store result
   obs_readSensor();
+  //Serial.print("At ");
+  //Serial.print(obs_direction);
+  //Serial.print(" I see first obstacle at: ");
+  //Serial.println(obs_view[90+obs_direction]);
 }
 
 static void obs_readSensor()
